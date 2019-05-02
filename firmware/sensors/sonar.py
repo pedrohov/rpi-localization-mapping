@@ -7,15 +7,15 @@ class Sonar():
         the correct ultrassound sensor given
         the GPIO pins.
     '''
-    def create(trig_pin, echo_pin = None):
-        if(echo_pin is None):
-            return ParallaxPing(trig_pin);
-        return HCSR04(trig_pin, echo_pin);
+    def create(pins):
+        if(len(pins) == 1):
+            return ParallaxPing(pins[0]);
+        return HCSR04(pins[0], pins[1]);
 
 if __name__ == "__main__":
     
-    sonar1 = Sonar.create(10);
-    sonar2 = Sonar.create(4, 17);
+    sonar1 = Sonar.create([10]);
+    sonar2 = Sonar.create([4, 17]);
     
     try:
         while(True):

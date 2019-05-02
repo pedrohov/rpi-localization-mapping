@@ -4,7 +4,7 @@ import time;
 class Infrared():
 
     def __init__(self, pin):
-        self.pin = pin;
+        self.pin = pin[0];
         GPIO.setmode(GPIO.BCM);
         GPIO.setup(self.pin, GPIO.IN);
     

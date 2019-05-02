@@ -4,7 +4,7 @@ import math;
 import sys;
 
 # MPU config file:
-SETTINGS_FILE = "MPUCONF";
+SETTINGS_FILE = "IMUCONF";
 
 class MPU():
     ''' Class for interfacing the low level
@@ -13,23 +13,23 @@ class MPU():
     def __init__(self):
         self.settings = RTIMU.Settings(SETTINGS_FILE);
         self.imu = RTIMU.RTIMU(self.settings);
-        print("IMU Name: " + self.imu.IMUName());
+        #print("IMU Name: " + self.imu.IMUName());
 
         # Initialize the MPU:
         if (not self.imu.IMUInit()):
-            print("IMU Init Failed")
-            sys.exit(1)
-        else:
-            print("IMU Init Succeeded")
+            print("IMU Init Failed");
+            sys.exit(1);
 
         # Set fusion parameters:
         self.imu.setSlerpPower(0.02);
         self.imu.setGyroEnable(True);
         self.imu.setAccelEnable(True);
         self.imu.setCompassEnable(True);
+        
+        time.sleep(0.4);
 
-        self.poll_interval = self.imu.IMUGetPollInterval();
-        print("Recommended Poll Interval: %dmS\n" % self.poll_interval);
+        #self.poll_interval = self.imu.IMUGetPollInterval();
+        #print("Recommended Poll Interval: %dmS\n" % self.poll_interval);
 
     def getData(self):
         ''' Return the MPU data if there is any available. '''
