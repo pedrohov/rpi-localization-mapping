@@ -3,42 +3,69 @@ import time;
 import math;
 import sys;
 
-# MPU config file:
-SETTINGS_FILE = "IMUCONF";
+# Define constantes para os angulos:
+PITCH = 0;
+ROLL  = 1;
+YAW   = 2;
 
 class MPU():
-    ''' Class for interfacing the low level
-        IMU library and extracting the sensor pose.
+    ''' Classe que estabelece a interface entre a biblioteca
+        do IMU e o MPU-9250 para obter a orientação do sensor.
     '''
-    def __init__(self):
-        self.settings = RTIMU.Settings(SETTINGS_FILE);
+    def __init__(self, config):
+        # Inicializa o MPU:
+        self.settings = RTIMU.Settings(config);
         self.imu = RTIMU.RTIMU(self.settings);
-        #print("IMU Name: " + self.imu.IMUName());
-
-        # Initialize the MPU:
         if (not self.imu.IMUInit()):
             print("IMU Init Failed");
             sys.exit(1);
 
-        # Set fusion parameters:
+        # Configura o MPU-9250:
         self.imu.setSlerpPower(0.02);
         self.imu.setGyroEnable(True);
         self.imu.setAccelEnable(True);
         self.imu.setCompassEnable(True);
-        
-        time.sleep(0.4);
 
-        #self.poll_interval = self.imu.IMUGetPollInterval();
-        #print("Recommended Poll Interval: %dmS\n" % self.poll_interval);
+        # Tempo de espera necessario entre leituras:
+        self.poll_interval = self.imu.IMUGetPollInterval() * 0.001;
+        self.last_poll = time.time();
+        time.sleep(self.poll_interval);
 
     def getData(self):
-        ''' Return the MPU data if there is any available. '''
+        ''' Retorna uma tupla com os dados do IMU.
+            Para garantir que o sensor esteja preparado
+            para leitura, o processo e interrompido por
+            'self.poll_interval' segundos.
+        '''
+        data = None;
         if(self.imu.IMURead()):
-            return self.imu.getIMUData()["fusionPose"];
-        
-        
+            data = self.imu.getIMUData()["fusionPose"];
+        time.sleep(self.imu.IMUGetPollInterval() * 0.001);
+        return data;
+            
+    def getPitch(self):
+        """ Retorna o angulo de pitch em graus. """
+        data = self.getData();
+        if(data is None):
+            return None;
+        return math.degrees(data[PITCH]);
+            
+    def getRoll(self):
+        """ Retorna o angulo de roll em graus. """
+        data = self.getData();
+        if(data is None):
+            return None;
+        return math.degrees(data[ROLL]);
+    
+    def getYaw(self):
+        """ Retorna o angulo de yaw em graus. """
+        data = self.getData();
+        if(data is None):
+            return None;
+        return math.degrees(data[YAW]);
+            
 if __name__ == "__main__":
-    mpu = MPU();
+    mpu = MPU('IMUCONF');
     
     while True:
         fusionPose = mpu.getData();
@@ -46,4 +73,4 @@ if __name__ == "__main__":
             continue;
         print("r: %f p: %f y: %f" % (math.degrees(fusionPose[0]), 
             math.degrees(fusionPose[1]), math.degrees(fusionPose[2])));
-        time.sleep(mpu.poll_interval * 1.0 / 1000.0);
+        #print(mpu.getYaw());

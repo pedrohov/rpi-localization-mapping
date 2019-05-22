@@ -5,10 +5,15 @@ class ParallaxPing():
     ''' Class for the Ping))) ultrasonic sensor.
         Provides readings within 3cm to 3m range.
     '''
-    def __init__(self, pin):
-        self.pin = pin;
+    def __init__(self, config):
+        self.pin = config["pins"][0];
         GPIO.setmode(GPIO.BCM);
-        GPIO.setup(pin, GPIO.OUT);
+        GPIO.setup(self.pin, GPIO.OUT);
+        
+        self.center_offset = config["center_offset"];
+        self.orientation   = config["orientation"];
+        self.max_range     = config["max_range"];
+        self.min_range     = config["min_range"];
     
     def getData(self):
         ''' Returns the distance in centimeters. '''
@@ -39,6 +44,16 @@ class ParallaxPing():
         distance = self.convertDurationToCM(pulse_duration);
         time.sleep(0.1);
         return distance;
+        
+    def getInfo(self):
+        info = {};
+        info["data"] = self.getData();
+        info["obstacle_found"] = True;
+        if(info["data"] > self.max_range):
+            info["obstacle_found"] = False;
+        info["orientation"] = self.orientation;
+        info["offset"] = self.center_offset;
+        return info;
     
     def convertDurationToCM(self, duration):
         ''' Converts the pulse duration into distance. '''

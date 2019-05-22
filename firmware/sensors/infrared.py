@@ -3,16 +3,30 @@ import time;
 
 class Infrared():
 
-    def __init__(self, pin):
-        self.pin = pin[0];
+    def __init__(self, config):
+        self.pin = config["pins"][0];
         GPIO.setmode(GPIO.BCM);
         GPIO.setup(self.pin, GPIO.IN);
+        
+        self.center_offset = config["center_offset"];
+        self.orientation   = config["orientation"];
+        self.range = config["range"];
     
     def getData(self):
-        ''' Returns 1 if there is no
-            obstacle in range.
+        ''' Retorna True se existe
+            um obstaculo no alcance.
         '''
-        return GPIO.input(self.pin);
+        # 1 = Nao existe obstaculo.
+        if(GPIO.input(self.pin) == 1):
+            return False;
+        return True;
+        
+    def getInfo(self):
+        info = {};
+        info["obstacle_found"] = self.getData();
+        info["orientation"] = self.orientation;
+        info["offset"] = self.center_offset;
+        return info;
 
 if __name__ == "__main__":
     infrared = Infrared(9);

@@ -5,15 +5,20 @@ class HCSR04():
     ''' Class for the HC-SR04 ultrasonic sensor.
         Provides readings within 2cm to 4m range.
     '''
-    def __init__(self, trig_pin, echo_pin):
-        self.trig_pin = trig_pin;
-        self.echo_pin = echo_pin;
+    def __init__(self, config):
+        self.trig_pin = config["pins"][0];
+        self.echo_pin = config["pins"][1];
         GPIO.setmode(GPIO.BCM);
-        GPIO.setup(trig_pin, GPIO.OUT)
-        GPIO.setup(echo_pin, GPIO.IN)
+        GPIO.setup(self.trig_pin, GPIO.OUT);
+        GPIO.setup(self.echo_pin, GPIO.IN);
+        
+        self.center_offset = config["center_offset"];
+        self.orientation   = config["orientation"];
+        self.max_range     = config["max_range"];
+        self.min_range     = config["min_range"];
         
         # Cleanup output:
-        GPIO.output(trig_pin, GPIO.LOW);
+        GPIO.output(self.trig_pin, GPIO.LOW);
         time.sleep(2);
         
     def getData(self):
@@ -36,6 +41,16 @@ class HCSR04():
         pulse_duration = pulse_end - pulse_start;
         time.sleep(0.1);
         return self.convertDurationToCM(pulse_duration);
+        
+    def getInfo(self):
+        info = {};
+        info["data"] = self.getData();
+        info["obstacle_found"] = True;
+        if(info["data"] > self.max_range):
+            info["obstacle_found"] = False;
+        info["orientation"] = self.orientation;
+        info["offset"] = self.center_offset;
+        return info;
     
     def convertDurationToCM(self, duration):
         ''' Converts the pulse duration into distance. '''
