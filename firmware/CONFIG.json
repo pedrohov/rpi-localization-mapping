@@ -1,40 +1,51 @@
 {
     "pin_mode": "GPIO",
     "map": {
-        "width": 100,
-        "height": 100,
-        "resolution": 10
+        "resolution": 10,
+        "max_range": 350
     },
     "robot": {
-        "x": 50,
-        "y": 50,
-        "orientation": 0
-    },
-    "measurement": {
-            "front": {
-                    "type": "sonar",
-                    "pins": [10]
-            },
-            "left": {
-                    "type": "sonar",
-                    "pins": [4, 17]		
-            },
-            "right": {
-                    "type": "infrared",
-                    "pins": [9]		
-            }
-    },
-    "odometry": {
-        "pin": 21,
-        "count_per_revolution": 20,
-        "wheel_circumference": 42.73
-    },
-    "motors": {
-        "top_left": [11, 5],
-        "top_right": [26, 19],
-        "bottom_left": [22, 27],
-        "bottom_right": [6, 13]
-    },
+        "x": 0,
+        "y": 0,
+        "orientation": 0,
+		"measurement": {
+				"front": {
+						"type": "sonar",
+						"pins": [10],
+						"center_offset": 14,
+						"orientation": 0,
+						"max_range": 300,
+						"min_range": 7
+				},
+				"left": {
+						"type": "sonar",
+						"pins": [4, 17],
+						"center_offset": 7,
+						"orientation": 90,
+						"max_range": 300,
+						"min_range": 7
+				},
+				"right": {
+						"type": "infrared",
+						"pins": [9],
+						"center_offset": 7,
+						"orientation": -90,
+						"range": 25
+				}
+		},
+		"odometry": {
+			"pin": 21,
+			"count_per_revolution": 50,
+			"wheel_circumference": 42.73,
+			"encoder_circumference": 4.08
+		},
+		"motors": {
+			"top_left": [11, 5],
+			"top_right": [26, 19],
+			"bottom_left": [22, 27],
+			"bottom_right": [6, 13]
+		}
+	},
     "server": {
         "ip": "192.168.0.102",
         "port": "8080"

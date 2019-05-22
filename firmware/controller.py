@@ -28,8 +28,8 @@ class Controller():
             self.stop();
         
     def reverse(self, timer = None):
-        self.top_left.reverse();
-        self.bottom_left.reverse();
+        #self.top_left.reverse();
+        #self.bottom_left.reverse();
         self.top_right.reverse();
         self.bottom_right.reverse();
         
@@ -37,9 +37,9 @@ class Controller():
             time.sleep(timer);
             self.stop();
         
-    def move_left(self, timer = None):
-        self.top_left.reverse();
-        self.bottom_left.reverse();
+    def rotateLeft(self, timer = None):
+        #self.top_left.reverse();
+        #self.bottom_left.reverse();
         self.top_right.forward();
         self.bottom_right.forward();
         
@@ -47,11 +47,11 @@ class Controller():
             time.sleep(timer);
             self.stop();
         
-    def move_right(self, timer = None):
+    def rotateRight(self, timer = None):
         self.top_left.forward();
         self.bottom_left.forward();
-        self.top_right.reverse();
-        self.bottom_right.reverse();
+        #self.top_right.reverse();
+        #self.bottom_right.reverse();
         
         if(timer is not None):
             time.sleep(timer);
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     try:
         # Test the controller:
         controller = Controller(11, 5, 22, 27, 26, 19, 6, 13);
-        controller.forward(1);
+        #controller.forward(1);
         #controller.reverse(3);
-        #controller.move_left(3);
-        #controller.move_right(2);
+        controller.rotateLeft(3);
+        #controller.rotateRight(2);
         GPIO.cleanup();
     except:
         GPIO.cleanup();
