@@ -7,7 +7,7 @@ class Slam():
         self.config = config;
         
         # Configura o veiculo:
-        self.robot  = Robot(config['robot'], config['map']);
+        self.robot = Robot(config['robot'], config['map']);
                 
         # Configura o mapa:
         print('Create map.');
@@ -31,10 +31,26 @@ class Slam():
         try:
             self.socket = ClientSocket(config['server']['ip'], config['server']['port']);
             self.socket.start();
+            # Declara o socket do robo:
+            self.sendData({
+                'command': 'robot_socket',
+                'resolution': config['map']['resolution'],
+                'max_range': config['map']['max_range'],
+                'robot_pose': self.robot.pose
+            });
+            
+            # Envia os primeiros dados:
+            self.sendData({
+                'command': 'new_robot_data',
+                'robot_pose': self.robot.pose,
+                'map_data': data
+            });
             print('Connected.');
         except:
             print('Connection refused.');
             exit();
+            
+        
             
     def obstacleAvoidance(self, sensor_data):
         """ Retorna o proximo controle a ser executado.
@@ -95,7 +111,7 @@ class Slam():
         self.map.update(data, self.robot.pose);
     
     def SLAM(self):
-        while(self.nextControl is not None):
+        while(self.next_control is not None):
             # Executa o controle:
             odometry_data = self.robot.move(self.next_control);
             
@@ -114,8 +130,8 @@ class Slam():
             # Envia os novos dados ao servidor:
             self.sendData({
                     'command': 'new_robot_data',
-                    'robot': robot_pose,
-                    'data': sensor_data
+                    'robot_pose': robot_pose,
+                    'map_data': sensor_data
                 });
             
             # Determina o proximo controle:
@@ -127,11 +143,9 @@ class Slam():
         # Encerra a aplicacao:
         self.cleanup();
     
-    def sendData(self):
-        """ Send the current state of the robot
-            to the server.
-        """
-        pass;
+    def sendData(self, data):
+        """ Passa dados para o socket enviar ao servidor. """
+        self.socket.send(data);
         
     def cleanup(self):
         self.robot.cleanup();

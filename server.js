@@ -3,43 +3,43 @@ var port   = process.env.PORT || 8080;
 var ws     = new Server({ port: port });
 
 // Sockets:
-let appSocket = null;
-let robotSocket = null;
-
-// SLAM Data:
-var readings = [];
+let app_sockets  = [];
+let robot_socket = null;
 
 ws.on('connection', function(socket) {
 
-    console.log('New connection');
+    console.log('> New WebSocket');
 
     socket.on('message', function(msg) {
-        // Parse message:
+        // Tenta transformar a mensagem em um objeto JSON:
         try {
             msg = JSON.parse(msg);
         }
-        catch(e) {
+        catch(error) {
             return;
         }
 
-        console.log(msg.command)
+        // Exibe a mensagem no console:
+        console.log('> Mensagem:');
+        console.log(msg);
         let response = null;
 
-        // Socket identification:
+        // Mensagens de identificacao do WebSocket:
         if(msg.command === 'app_socket') {
-            appSocket = this;
+            app_sockets.push(this);
         } else if(msg.command === 'robot_socket') {
-            robotSocket = this;
+            robot_socket = this;
+            appMulticast(msg);
         }
 
-        // Visualization App - Get robot data:
+        // App de Visualizacao - Get Robot Data:
         if(msg.command === 'get_robot_data') {
-            appSocket.send(JSON.stringify({ data: readings }));
+            appMulticast({ data: readings });
         }
         // Visualization App - Start SLAM:
         else if(msg.command === 'start_robot') {
-            if(robotSocket) {
-                robotSocket.send(JSON.stringify({
+            if(robot_socket) {
+                robot_socket.send(JSON.stringify({
                     command: 'start'
                 }))
             }
@@ -47,17 +47,28 @@ ws.on('connection', function(socket) {
 
         // Firmware - Add new data:
         if(msg.command === 'new_robot_data') {
-            if(appSocket) {
-                appSocket.send(JSON.stringify({ data: readings }));
-            }
+            appMulticast(msg);
         }
     });
   
     socket.on('close', function() {
-        if(this === appSocket)
-            console.log('Closing connection with App');
-        else if(this === robotSocket)
+        index = app_sockets.indexOf(this);
+        if(index >= 0) {
+            app_sockets.splice(index, 1);
+            console.log('Closing connection with App #' + index);
+        }
+        else
             console.log('Closing connection with Robot');
     });
 
 });
+
+function appMulticast(msg) {
+    // Envia uma mensagem a todos os sockets para visualizacao:
+    if(app_sockets.length > 0) {
+        for(let i = 0; i < app_sockets.length; i++)
+            app_sockets[i].send(JSON.stringify(msg));
+    }
+}
+
+console.log('Server is listening at port ' + port);

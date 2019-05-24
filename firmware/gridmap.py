@@ -60,7 +60,7 @@ class GridMAP():
                 
         # Adiciona colunas no fim da matriz:
         new_columns = robot_pose['x'] + self.no_cells;
-        if(new_columns > len(self.grid[0])):
+        if(new_columns >= len(self.grid[0])):
             for row in self.grid:
                 row += [0.5] * (new_columns - len(row));
                 
@@ -69,7 +69,9 @@ class GridMAP():
         if(new_columns < 0):
             for row in self.grid:
                 row = ([0.5] * (new_columns * -1)) + row;
-                
+        
+        new_columns *= -1;
+        new_lines   *= -1;
         return (new_columns, new_lines);
     
     def __str__(self):

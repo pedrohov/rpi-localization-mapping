@@ -15,7 +15,24 @@
 			<form>
 				<input type="text" id="ip"   maxlength="13" value="localhost" placeholder="IP Address">
                 <input type="text" id="port" maxlength="4"  value="8080"      placeholder="Port">
-                <div class="btn" id="connect" onclick="toggleConnect()">CONNECT</div>
+                <div class="btn" id="connect" onclick="toggleConnect()">CONNECT</div><br>
+                <div class="flex-row">
+	                <div class="btn hidden" id="edit" onclick="toggleEdit()">EDIT</div>
+	                <div class="btn hidden" id="path" onclick="togglePath()">PATH</div>
+	                <div class="btn hidden" id="goto" onclick="toggleGoto()">GO TO</div>
+	            </div>
+	            <div class="flex-row hidden" id="editOptions">
+	            	<div>
+	            		<input type="radio" name="editAction" value="obstacle" onClick="changeEditAction(this)">Obstacle
+	            	</div>
+	            	<div>
+	            		<input type="radio" name="editAction" value="free" onClick="changeEditAction(this)">Free
+	            	</div>
+	            	<div>
+	            		<input type="radio" name="editAction" value="unknown" onClick="changeEditAction(this)">Unknown
+	            	</div>
+	            </div>
+	            <div class="btn hidden" id="export" onclick="exportMap()">Export</div>
 			</form>
 			<div id="logger">
 				

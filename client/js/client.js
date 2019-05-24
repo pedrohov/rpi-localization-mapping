@@ -1,68 +1,111 @@
-var address = "localhost";
-var port    = "8080";
-var socket  = null;
+// Socket settings:
+let address = "localhost";
+let port    = "8080";
+let socket  = null;
+
+// Editor state:
+let isConnected = false;
+let isEditing   = false;
+let isPathing   = false;
+let isGoto      = false;
+
+let editAction = 'obstacle';
+
+// Canvas:
+let canvas  = null;
+let context = null;
+
+// Map:
+let map = null;
 
 window.onload = function() {
-    let canvas    = document.getElementById("canvas");
-    let context   = canvas.getContext("2d");
+    canvas  = document.getElementById("canvas");
+    context = canvas.getContext("2d");
     canvas.width  = window.innerWidth - $('.navbar').innerWidth();
     canvas.height = window.innerHeight;
 
-    let map = new GridMAP(null, 10, canvas);
+    // Instancia o mapa:
+    map = new GridMAP(canvas);
 
     // Define mouse events:
-    let mouse = {
-        x: 0,
-        y: 0,
-        isPressed: false
-    };
-
     window.addEventListener('wheel', function(event) {
-        map.setZoom(event.deltaY);
+        if(isConnected)
+            map.setZoom(event.deltaY);
     });
-    /*window.addEventListener('mousedown', function(event) {
-        event = event || window.event;
-        let x = (event.pageX || event.clientX) - canvas.getBoundingClientRect().left;
-        let y = (event.pageY || event.clientY) - canvas.getBoundingClientRect().top;
 
-        mouse.isPressed = true;
-        mouse.x = x;
-        mouse.y = y;
-    });
-    window.addEventListener('mouseup', function(event) {
-        mouse.isPressed = false;
-    });
     window.addEventListener('mousemove', function(event) {
-        if(mouse.isPressed) {
-            event = event || window.event;
-            let x = (event.pageX || event.clientX) - canvas.getBoundingClientRect().left;
-            let y = (event.pageY || event.clientY) - canvas.getBoundingClientRect().top;
-            
-            let moveX = 0;
-            let moveY = 0;
-
-            if(mouse.x - x > 50)
-                moveX = 2;
-            else if(mouse.x - x < 50)
-                moveX = -2;
-            if(mouse.y - y > 50)
-                moveY = 2;
-            if(mouse.y - y < 50)
-                moveY = -2;
-
-
-            map.addXY(moveX, moveY);
+        let mouse = getMouseOffset(event);
+        if(isEditing || isConnected) {
+            map.isHovering(mouse.x, mouse.y);
+            map.draw();
         }
-    });*/
+    });
+
+    window.addEventListener('mousedown', function(event) {
+        let mouse = getMouseOffset(event);
+        if(isEditing && editAction && isConnected) {
+            map.fillCell(mouse.x, mouse.y, editAction);
+            //map.draw();
+        }
+    });
+
+    // Inicia loop para renderizar o mapa:
+    window.requestAnimationFrame(map.draw);
 }
 
 function toggleConnect() {
-    // Try to connect:
-    if(!socket)
+    if(!isConnected) {
         openWebsocket();
-    // Close connection:
-    else
+    } else {
         socket.close();
+    }
+}
+
+function toggleEdit() {
+    disableAll('edit');
+
+    if(isEditing) {
+        isEditing = false;
+        $('#edit').removeClass('selected');
+        $('#editOptions').addClass('hidden');
+    } else {
+        isEditing = true;
+        $('#edit').addClass('selected');
+        $('#editOptions').removeClass('hidden');
+    }
+}
+
+function togglePath() {
+    disableAll('path');
+
+    if(isPathing) {
+        isPathing = false;
+        $('#path').removeClass('selected');
+    } else {
+        isPathing = true;
+        $('#path').addClass('selected');
+    }
+}
+
+function toggleGoto() {
+    disableAll('goto');
+
+    if(isGoto) {
+        isGoto = false;
+        $('#goto').removeClass('selected');
+    } else {
+        isGoto = true;
+        $('#goto').addClass('selected');
+    }
+}
+
+function disableAll(mode) {
+    if(isEditing && mode !== 'edit')
+        toggleEdit();
+    else if(isPathing && mode !== 'path')
+        togglePath();
+    else if(isGoto && mode !== 'goto')
+        toggleGoto();
 }
 
 function openWebsocket() {
@@ -75,13 +118,15 @@ function openWebsocket() {
         // When the connection is open, update the connection status:
         socket.onopen = function () {
             console.log("Connected");
-            $("#connect").html("DISCONNECT");
-            $('#ip').prop('disabled', true);
-            $('#port').prop('disabled', true);
+            changeUIconnected();
+            isConnected = true;
             
             let msg = { command: 'app_socket' };
             send(msg);
-            send({command: 'start_robot'})
+            send({command: 'start_robot'});
+            
+            changeUIconnected();
+            isConnected = true;
         };
 
         // Log errors:
@@ -98,6 +143,8 @@ function openWebsocket() {
                 alert("CONNECTION REFUSED:\nCheck if the IP:Port is correct and listening to connections.");
 
             socket = null;
+            changeUIdisconnected();
+            isConnected = false;
 
             // Enable address input:
             $('#ip').prop('disabled', false);
@@ -107,11 +154,50 @@ function openWebsocket() {
         // Log messages from the server
         socket.onmessage = function(event) {
             console.log('Server: ' + event.data);
+            data = JSON.parse(event.data);
+
+            if(data.command === 'robot_socket')
+                map.initialize(data);
+            else if(data.command === 'new_robot_data')
+                map.update(data.map_data, data.robot_pose);
         };
 
     } catch(exception) {
         console.log(exception);
     }
+}
+
+function changeUIconnected() {
+    $('#connect').html('DISCONNECT');
+    $('#ip').prop('disabled', true);
+    $('#port').prop('disabled', true);
+
+    $('#edit').removeClass('hidden');
+    $('#path').removeClass('hidden');
+    $('#goto').removeClass('hidden');
+
+    showMap();
+}
+
+function changeUIdisconnected() {
+    $('#connect').html('CONNECT');
+    $('#ip').prop('disabled', false);
+    $('#port').prop('disabled', false);
+    
+    $('#edit').addClass('hidden');
+    $('#path').addClass('hidden');
+    $('#goto').addClass('hidden');
+
+    if(!map.hasData())
+        clearMap();
+}
+
+function clearMap() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function showMap() {
+    map.update();
 }
 
 function send(object) {
@@ -120,4 +206,15 @@ function send(object) {
     } catch(e) {
         return;
     }
+}
+
+function getMouseOffset(event) {
+    event = event || window.event;
+    var x = (event.pageX || event.clientX) - canvas.getBoundingClientRect().left;
+    var y = (event.pageY || event.clientY) - canvas.getBoundingClientRect().top;
+    return {x, y};
+}
+
+function changeEditAction(button) {
+    editAction = button.value;
 }
