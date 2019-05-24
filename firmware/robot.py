@@ -1,4 +1,4 @@
-import json, sys, time;
+import json, sys, time, math;
 import RPi.GPIO as GPIO;
 from pathlib import Path;
 
@@ -12,20 +12,29 @@ from sonar         import *;
 from imu           import *;
 
 # Define controles do veiculo:
-FORWARD   = "Z1";
-ROT_LEFT  = "Z2";
-ROT_RIGHT = "Z3";
+FORWARD      = "Z1";
+ROTATE_LEFT  = "Z2";
+ROTATE_RIGHT = "Z3";
 
 class Robot():
-	
-    def __init__(self, config, resolution):
-        # Cria a posicao inicial do robo:
-        self.position = {
-            "x": config['x'],
-            "y": config['y'],
+    """ Classe responsavel por gerenciar todos os sensores e atuadores.
+        O Robo implementa funcoes para movimentacao e sensoriamento,
+        define quais movimentos podem ser executados e realiza a interface
+        entre os sensores e o Slam.
+    """
+    def __init__(self, config, map_config):
+        # Cria a posicao inicial do robo.
+        # O robo sempre se posiciona no meio do mapa inicial
+        # e constroi o mapa em relacao a esta posicao.
+        # x = Coluna da matriz em que o robo esta.
+        # y = Linha da matriz. 
+        coords = self.getIniXY(map_config);
+        self.pose = {
+            "x": coords[0],
+            "y": coords[1],
             "orientation": config['orientation'],
         }
-        self.resolution = resolution;
+        self.resolution = map_config['resolution'];
         
         # Configura os motores:
         print('Motor setup.');
@@ -47,15 +56,11 @@ class Robot():
         # Configura os sensores de distancia:
         print('Sensor setup.');
         self.sensors = {};
-        
         for (key, sensor) in config['measurement'].items():
             if(sensor["type"] == "infrared"):
                 self.sensors[key] = Infrared(sensor);
             else:
                 self.sensors[key] = Sonar.create(sensor);
-                
-        #print(self.sensors["front"].getData());
-        #print(self.canMoveForward());
         
         # Configura o odometro:
         print('Odometer setup.');
@@ -63,6 +68,25 @@ class Robot():
             
         # Proximo controle a ser executado:
         self.next_control = None;
+        
+    def update(self, odometry):
+        distance = odometry['distance'];
+        orientation = math.radians(self.orientation);
+        
+        # Calcula a nova posicao do robo na matriz:
+        if(distance >= 0):
+            self.pose['x'] += math.floor(distance * math.cos(orientation) / self.resolution);
+            self.pose['y'] += math.floor(distance * math.sin(orientation) / self.resolution);
+            
+        # Atualiza a orientacao do robo:
+        self.orientation = odometry['orientation'];
+        
+        return self.pose;
+        
+    def correctPose(self, correction):
+        self.pose['x'] += correction[0];
+        self.pose['y'] += correction[1];
+        return self.pose;
         
     def canMoveForward(self):
         distance = self.sensors["front"].getData();
@@ -90,7 +114,7 @@ class Robot():
         # Tempo gasto para executar o comando:
         elapsed = time.time() - time_ini;
 		
-        return { "distance": distance, "time": elapsed };
+        return { "distance": distance, "time": elapsed, "orientation": self.orientation };
     
     def rotateLeft(self):
         # Orientacao inicial:
@@ -108,7 +132,7 @@ class Robot():
         # Tempo gasto para executar o comando:
         elapsed = time.time() - time_ini;
         
-        return { "orientation": orientation, "time": elapsed };
+        return { "distance": -1, "orientation": orientation, "time": elapsed };
     
     def rotateRight(self):
         pass;
@@ -143,12 +167,23 @@ class Robot():
         return odometry;
         
     def calcOrientation(self):
+        """ Le a orientacao do MPU.
+            Faz leituras ate receber uma valida.
+        """
         orientation = self.imu.getYaw();
         while(orientation is None):
             orientation = self.imu.getYaw();
         return orientation;
         
+    def getIniXY(self, map_config):
+        """ Determina as celulas do centro do mapa. """
+        no_cells = math.floor(map_config['max_range'] / (map_config['resolution'] * 2));
+        return (no_cells, no_cells);
+        
     def cleanup(self):
+        """ Libera os GPIOs utilizados pelo veiculo.
+            Termina quaisquer threads em execucao.
+        """
         if(self.odometer is not None):
             self.odometer.kill();
         GPIO.cleanup();
@@ -158,7 +193,7 @@ if __name__ == "__main__":
         config_file = open('CONFIG.json', 'r');
         config = json.loads(config_file.read());
         
-        robot = Robot(config['robot'], config['map']['resolution']);
+        robot = Robot(config['robot'], config['map']);
         print(robot.sense());
         print(robot.move(ROT_LEFT));
         #print(robot.move(FORWARD));

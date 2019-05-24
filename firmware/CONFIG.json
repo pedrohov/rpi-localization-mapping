@@ -1,8 +1,8 @@
 {
     "pin_mode": "GPIO",
     "map": {
-        "resolution": 10,
-        "max_range": 350
+        "resolution": 10.0,
+        "max_range": 400.0
     },
     "robot": {
         "x": 0,
@@ -47,7 +47,7 @@
 		}
 	},
     "server": {
-        "ip": "192.168.0.102",
+        "ip": "192.168.0.100",
         "port": "8080"
     }
 }

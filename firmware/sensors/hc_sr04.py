@@ -48,8 +48,10 @@ class HCSR04():
         info["obstacle_found"] = True;
         if(info["data"] > self.max_range):
             info["obstacle_found"] = False;
+            info['data'] = self.max_range;
         info["orientation"] = self.orientation;
         info["offset"] = self.center_offset;
+        info["min_range"] = self.min_range;
         return info;
     
     def convertDurationToCM(self, duration):

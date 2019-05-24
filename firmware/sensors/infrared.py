@@ -26,6 +26,10 @@ class Infrared():
         info["obstacle_found"] = self.getData();
         info["orientation"] = self.orientation;
         info["offset"] = self.center_offset;
+        info['data'] = 0;
+        if(info['obstacle_found'] is False):
+            info['data'] = 25;
+        
         return info;
 
 if __name__ == "__main__":

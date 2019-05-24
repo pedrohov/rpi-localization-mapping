@@ -3,7 +3,7 @@ from threading import Thread;
 from websocket import create_connection;
 
 class ClientSocket(Thread):
-    """ Class for handling connections with the app.
+	""" Class for handling connections with the app.
         Sends the current state of the robot to the visualization app.
     """
 
@@ -25,7 +25,11 @@ class ClientSocket(Thread):
                 self.message = json.loads(message);
                 print(self.message);
             except json.decoder.JSONDecodeError:
+                print('Received an invalid message. Message discarded.');
                 continue;
+            except:
+				print('Connection error.');
+				return;
 
     def send(self, data):
         self.socket.send(json.dumps(data));
