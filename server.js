@@ -20,7 +20,7 @@ ws.on('connection', function(socket) {
         }
 
         // Exibe a mensagem no console:
-        console.log('> Mensagem:');
+        console.log('> Message:');
         console.log(msg);
         let response = null;
 
@@ -37,7 +37,7 @@ ws.on('connection', function(socket) {
             appMulticast({ data: readings });
         }
         // Visualization App - Start SLAM:
-        else if(msg.command === 'start_robot') {
+        else if(msg.command === 'start_slam') {
             if(robot_socket) {
                 robot_socket.send(JSON.stringify({
                     command: 'start'

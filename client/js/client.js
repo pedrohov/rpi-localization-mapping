@@ -24,18 +24,39 @@ window.onload = function() {
     canvas.width  = window.innerWidth - $('.navbar').innerWidth();
     canvas.height = window.innerHeight;
 
+    /*let grid = new Array(50);
+    for(let i=0; i < 50; i++) {
+        grid[i] = new Array(50)
+        for(let j=0; j< 50; j++)
+            grid[i][j] = 0;
+    }
+    /*let grid = new Array(5);
+    for(let i=0; i < 5; i++) {
+        grid[i] = new Array(5)
+        for(let j=0; j< 5; j++)
+            grid[i][j] = 0;
+    }*/
+
+    /*let grid = [[0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 1, 0],
+        [0, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 1, 0]]*/
+
     // Instancia o mapa:
     map = new GridMAP(canvas);
 
     // Define mouse events:
     window.addEventListener('wheel', function(event) {
-        if(isConnected)
+        if(isConnected) {
             map.setZoom(event.deltaY);
+            map.draw();
+        }
     });
 
     window.addEventListener('mousemove', function(event) {
         let mouse = getMouseOffset(event);
-        if(isEditing || isConnected) {
+        if(isEditing) {
             map.isHovering(mouse.x, mouse.y);
             map.draw();
         }
@@ -45,19 +66,25 @@ window.onload = function() {
         let mouse = getMouseOffset(event);
         if(isEditing && editAction && isConnected) {
             map.fillCell(mouse.x, mouse.y, editAction);
-            //map.draw();
+            map.draw();
+        } else if(isPathing) {
+            map.setPath(mouse.x, mouse.y);
         }
     });
 
     // Inicia loop para renderizar o mapa:
-    window.requestAnimationFrame(map.draw);
+    //window.requestAnimationFrame(map.draw);
 }
 
 function toggleConnect() {
     if(!isConnected) {
         openWebsocket();
+        /*changeUIconnected();
+        isConnected = true;*/
     } else {
         socket.close();
+        /*changeUIdisconnected();
+        isConnected = true;*/
     }
 }
 
@@ -124,9 +151,6 @@ function openWebsocket() {
             let msg = { command: 'app_socket' };
             send(msg);
             send({command: 'start_robot'});
-            
-            changeUIconnected();
-            isConnected = true;
         };
 
         // Log errors:
@@ -197,7 +221,8 @@ function clearMap() {
 }
 
 function showMap() {
-    map.update();
+    map.draw();
+    //map.update();
 }
 
 function send(object) {
