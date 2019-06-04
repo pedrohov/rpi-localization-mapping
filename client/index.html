@@ -1,51 +1,79 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>RPi SLAM</title>
-		<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
-		<link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+    <head>
+        <meta charset="utf-8">
+        <title>RPi SLAM</title>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
-		<link rel="stylesheet" type="text/css" href="css/style.css">
-	</head>
-	<body>
-		<nav class="navbar">
-			<h1>RPi Localization and Mapping</h1>
-			<form>
-				<input type="text" id="ip"   maxlength="13" value="localhost" placeholder="IP Address">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+    </head>
+    <body>
+        <nav class="navbar">
+            <h1>RPi Localization and Mapping</h1>
+            <form>
+                <input type="text" id="ip"   maxlength="13" value="localhost" placeholder="IP Address">
                 <input type="text" id="port" maxlength="4"  value="8080"      placeholder="Port">
-                <div class="btn" id="connect" onclick="toggleConnect()">CONNECT</div><br>
-                <div class="flex-row">
-	                <div class="btn hidden" id="edit" onclick="toggleEdit()">EDIT</div>
-	                <div class="btn hidden" id="path" onclick="togglePath()">PATH</div>
-	                <div class="btn hidden" id="goto" onclick="toggleGoto()">GO TO</div>
-	            </div>
-	            <div class="flex-row hidden" id="editOptions">
-	            	<div>
-	            		<input type="radio" name="editAction" value="obstacle" onClick="changeEditAction(this)">Obstacle
-	            	</div>
-	            	<div>
-	            		<input type="radio" name="editAction" value="free" onClick="changeEditAction(this)">Free
-	            	</div>
-	            	<div>
-	            		<input type="radio" name="editAction" value="unknown" onClick="changeEditAction(this)">Unknown
-	            	</div>
-	            </div>
-	            <div class="btn hidden" id="export" onclick="exportMap()">Export</div>
-			</form>
-			<div id="logger">
-				
-			</div>
-		</nav>
+                <div class="flex-row" style="margin-bottom: 2rem">
+                    <div class="btn" id="connect" onclick="toggleConnect()">CONNECT</div>
+                    <div class="btn" id="simulate" onclick="toggleSimulate()">SIMULATE</div>
+                </div>
+                <div class="flex-row hidden" id="options">
+                    <div class="btn" id="edit" onclick="toggleEdit()">EDIT</div>
+                    <div class="btn" id="path" onclick="togglePath()">PATHING</div>
+                    <div class="btn" id="goto" onclick="toggleGoto()">GO TO</div>
+                    <!--<div class="btn" id="clear">CLEAR</div>-->
+                </div>
+                <div class="flex-row hidden" id="editOptions">
+                    <label class="container">Obstacle
+                        <input type="radio" checked="checked" name="editOption" 
+                               value="obstacle" onClick="changeEditAction(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Free
+                        <input type="radio"  name="editOption" 
+                               value="free" onClick="changeEditAction(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Unknown
+                        <input type="radio" name="editOption" 
+                               value="unknown" onClick="changeEditAction(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+                <div class="flex-row hidden" id="searchOptions">
+                    <label class="container">A*
+                        <input type="radio" checked="checked" name="searchOption" value="A*" onClick="changeSearchMethod(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Greedy
+                        <input type="radio" name="searchOption" value="Greedy" onClick="changeSearchMethod(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Depth-First
+                        <input type="radio" name="searchOption" value="Depth-First" onClick="changeSearchMethod(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Breadth-First
+                        <input type="radio" name="searchOption" value="Breadth-First" onClick="changeSearchMethod(this)">
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+                <div class="btn hidden" id="export" onclick="exportMap()">Export</div>
+            </form>
+            <div id="logger">
+            </div>
+        </nav>
 
-		<canvas id="canvas"></canvas>
+        <!-- Canvas for drawing the grid -->
+        <canvas id="canvas"></canvas>
 
-		<!-- Load jQuery -->
-		<script src="js/jquery-3.2.1.min.js"></script>
+        <!-- Load jQuery -->
+        <script src="js/jquery-3.2.1.min.js"></script>
 
-		<!-- Load Websocket -->
-		<script src="js/Grid.js"></script>
-		<script src="js/client.js"></script>
-	</body>
+        <!-- Load Websocket -->
+        <script src="js/Grid.js"></script>
+        <script src="js/client.js"></script>
+    </body>
 </html>

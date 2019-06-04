@@ -1,6 +1,6 @@
 // Socket settings:
-let address = "localhost";
-let port    = "8080";
+let address = 'localhost';
+let port    = '8080';
 let socket  = null;
 
 // Editor state:
@@ -11,6 +11,9 @@ let isGoto      = false;
 
 let editAction = 'obstacle';
 
+// Search:
+let searchMethod = 'A*';
+
 // Canvas:
 let canvas  = null;
 let context = null;
@@ -19,32 +22,29 @@ let context = null;
 let map = null;
 
 window.onload = function() {
-    canvas  = document.getElementById("canvas");
-    context = canvas.getContext("2d");
+    canvas  = document.getElementById('canvas');
+    context = canvas.getContext('2d');
     canvas.width  = window.innerWidth - $('.navbar').innerWidth();
     canvas.height = window.innerHeight;
 
-    /*let grid = new Array(50);
-    for(let i=0; i < 50; i++) {
-        grid[i] = new Array(50)
-        for(let j=0; j< 50; j++)
-            grid[i][j] = 0;
-    }
-    /*let grid = new Array(5);
-    for(let i=0; i < 5; i++) {
-        grid[i] = new Array(5)
-        for(let j=0; j< 5; j++)
-            grid[i][j] = 0;
-    }*/
+    let size = 10;
+    let prob = 0.2;
 
-    /*let grid = [[0, 0, 1, 0, 0, 0],
+    let grid = new Array(size);
+    for(let i=0; i < size; i++) {
+        grid[i] = new Array(size)
+        for(let j=0; j< size; j++)
+            grid[i][j] = prob;
+    }
+
+    /*grid = [[0, 0, 1, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],
         [0, 0, 1, 0, 1, 0],
         [0, 0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 1, 0]]*/
+        [0, 0, 0, 0, 1, 0]]**/
 
     // Instancia o mapa:
-    map = new GridMAP(canvas);
+    map = new GridMAP(canvas, grid);
 
     // Define mouse events:
     window.addEventListener('wheel', function(event) {
@@ -64,23 +64,53 @@ window.onload = function() {
 
     window.addEventListener('mousedown', function(event) {
         let mouse = getMouseOffset(event);
+
+        // Pega a celula no mouse:
+        let pos = map.getCellAtMouse(mouse.x, mouse.y);
+        if(pos === null) return;
+
+        // Edicao do mapa:
         if(isEditing && editAction && isConnected) {
             map.fillCell(mouse.x, mouse.y, editAction);
             map.draw();
-        } else if(isPathing) {
-            map.setPath(mouse.x, mouse.y);
+        }
+        // Criacao de rotas:
+        else if(isPathing) {
+            // Se ja existe uma posicao de inicio,
+            // o usuario marcou a posicao final.
+            // Inicia o algoritmo:
+            if(map.start) {
+                // Verifica se a celula esta livre:
+                if(map.isOpen({x: pos.y, y: pos.x}))
+                    map.end = {x: pos.y, y: pos.x};
+                else return;
+
+                // Executa o algoritmo de roteamento:
+                map.isRoutingForRobot = false;
+                map.search(searchMethod);
+            }
+            // Marca a posicao inicial:
+            else {
+                // Verifica se a celula esta livre:
+                if(map.isOpen({x: pos.y, y: pos.x}))
+                    map.start = {x: pos.y, y: pos.x};
+            }
+
+            map.draw();
+        }
+        // Movimento do veiculo:
+        else if(isGoto) {
+            map.isRoutingForRobot = true;
+            map.goTo(pos);
         }
     });
-
-    // Inicia loop para renderizar o mapa:
-    //window.requestAnimationFrame(map.draw);
 }
 
 function toggleConnect() {
     if(!isConnected) {
-        openWebsocket();
-        /*changeUIconnected();
-        isConnected = true;*/
+        //openWebsocket();
+        changeUIconnected();
+        isConnected = true;
     } else {
         socket.close();
         /*changeUIdisconnected();
@@ -108,9 +138,11 @@ function togglePath() {
     if(isPathing) {
         isPathing = false;
         $('#path').removeClass('selected');
+        $('#searchOptions').addClass('hidden');
     } else {
         isPathing = true;
         $('#path').addClass('selected');
+        $('#searchOptions').removeClass('hidden');
     }
 }
 
@@ -183,7 +215,7 @@ function openWebsocket() {
             if(data.command === 'robot_socket')
                 map.initialize(data);
             else if(data.command === 'new_robot_data')
-                map.update(data.map_data, data.robot_pose);
+                map.update(data);
         };
 
     } catch(exception) {
@@ -196,9 +228,7 @@ function changeUIconnected() {
     $('#ip').prop('disabled', true);
     $('#port').prop('disabled', true);
 
-    $('#edit').removeClass('hidden');
-    $('#path').removeClass('hidden');
-    $('#goto').removeClass('hidden');
+    $('#options').removeClass('hidden');
 
     showMap();
 }
@@ -208,9 +238,7 @@ function changeUIdisconnected() {
     $('#ip').prop('disabled', false);
     $('#port').prop('disabled', false);
     
-    $('#edit').addClass('hidden');
-    $('#path').addClass('hidden');
-    $('#goto').addClass('hidden');
+    $('#options').addClass('hidden');
 
     if(!map.hasData())
         clearMap();
@@ -242,4 +270,8 @@ function getMouseOffset(event) {
 
 function changeEditAction(button) {
     editAction = button.value;
+}
+
+function changeSearchMethod(button) {
+    searchMethod = button.value;
 }
