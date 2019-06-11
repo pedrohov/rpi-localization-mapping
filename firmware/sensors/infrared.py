@@ -10,6 +10,7 @@ class Infrared():
         
         self.center_offset = config["center_offset"];
         self.orientation   = config["orientation"];
+        self.orient_offset = config["orientation"];
         self.range = config["range"];
     
     def getData(self):
@@ -31,10 +32,17 @@ class Infrared():
             info['data'] = 25;
         
         return info;
+        
+    def updateOrientation(self, new_orientation):
+        ''' Atualiza a orientacao do sensor em relacao ao veiculo. '''
+        self.orientation = (new_orientation + self.orient_offset) % 360;
 
 if __name__ == "__main__":
-    infrared = Infrared(9);
-    
+    infrared = Infrared({"type": "infrared",
+						"pins": [9],
+						"center_offset": 7,
+						"orientation": -90,
+						"range": 25});
     try:
         while(True):
             data = infrared.getData();

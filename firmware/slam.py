@@ -1,6 +1,7 @@
 from client_socket import *;
 from gridmap       import *;
 from robot         import *;
+import cProfile;
 
 class Slam():
     def __init__(self, config):
@@ -10,7 +11,7 @@ class Slam():
         self.robot = Robot(config['robot'], config['map']);
                 
         # Configura o mapa:
-        print('Create map.');
+        #print('Create map.');
         self.map = GridMAP(config['map']);
         
         # Determina o proximo controle a ser executado:
@@ -22,35 +23,32 @@ class Slam():
         
         # Faz a primeira leitura e constroi o mapa inicial:
         data = self.dataAssociation(sensor_data, self.robot.pose);
-        print(data);
+        #print(data);
         
         self.map.update(data, self.robot.pose);
+        self.time = 0;
         
         # Conecta com o servidor:
         print('Connecting to ' + config['server']['ip'] + ':' + config['server']['port']);
         try:
             self.socket = ClientSocket(config['server']['ip'], config['server']['port']);
             self.socket.start();
-            # Declara o socket do robo:
+            # Declara o socket do robo.
+            # Envia os primeiros dados:
             self.sendData({
                 'command': 'robot_socket',
                 'resolution': config['map']['resolution'],
                 'max_range': config['map']['max_range'],
-                'robot_pose': self.robot.pose
-            });
-            
-            # Envia os primeiros dados:
-            self.sendData({
-                'command': 'new_robot_data',
                 'robot_pose': self.robot.pose,
-                'map_data': data
-            });
+                'map_data': data,
+                'map_size': self.map.getSize(),
+                'map_resize': [0, 0, 0, 0]
+            });            
             print('Connected.');
+            #exit();
         except:
             print('Connection refused.');
             exit();
-            
-        
             
     def obstacleAvoidance(self, sensor_data):
         """ Retorna o proximo controle a ser executado.
@@ -101,10 +99,15 @@ class Slam():
         return data;
             
     def localization(self, odometry_data):
-        """ Atualiza a posição atual do robo. """
-        robot_pose   = self.robot.update(odometry_data);
+        """ Atualiza a posicao atual do robo.
+            Retorna a posicao atual e a quantidade de linhas
+            e de colunas adicionadas ao mapa. 
+        """
+        robot_pose = self.robot.update(odometry_data);
+        print(self.robot.pose);
         correct_pose = self.map.resize(robot_pose);
-        return self.robot.correctPose(correct_pose);
+        print(correct_pose);
+        return (self.robot.correctPose(correct_pose), correct_pose);
     
     def mapping(self, data):
         """ Atualiza cada celula do mapa. """
@@ -114,6 +117,7 @@ class Slam():
         while(self.next_control is not None):
             # Executa o controle:
             odometry_data = self.robot.move(self.next_control);
+            print(odometry_data);
             
             # Atualiza a posicao do veiculo:
             robot_pose = self.localization(odometry_data);
@@ -122,7 +126,7 @@ class Slam():
             sensor_info = self.robot.sense();
             
             # Associa as leituras as respectivas celulas no mapa:
-            sensor_data = self.dataAssociation(sensor_data, robot_pose);
+            sensor_data = self.dataAssociation(sensor_info, robot_pose[0]);
             
             # Atualiza o mapa:
             self.mapping(sensor_data);
@@ -130,8 +134,9 @@ class Slam():
             # Envia os novos dados ao servidor:
             self.sendData({
                     'command': 'new_robot_data',
-                    'robot_pose': robot_pose,
-                    'map_data': sensor_data
+                    'robot_pose': robot_pose[0],
+                    'map_resize': robot_pose[1],
+                    'map_data': sensor_data                    
                 });
             
             # Determina o proximo controle:
@@ -139,9 +144,7 @@ class Slam():
             
         # Informa ao servidor que a aplicacao encerrou:
         self.sendData({ 'command': 'slam_end' });
-        
-        # Encerra a aplicacao:
-        self.cleanup();
+        print('SLAM end');
     
     def sendData(self, data):
         """ Passa dados para o socket enviar ao servidor. """
@@ -149,6 +152,7 @@ class Slam():
         
     def cleanup(self):
         self.robot.cleanup();
+        #self.socket.kill();
 
 if __name__ == "__main__":
     try:
@@ -156,7 +160,9 @@ if __name__ == "__main__":
         config = json.loads(config_file.read());
         
         slam = Slam(config);
+        slam.SLAM();
         slam.cleanup();
+        exit();
     except json.JSONDecodeError:
         print('Invalid configuration file.');
         GPIO.cleanup();

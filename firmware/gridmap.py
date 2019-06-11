@@ -47,9 +47,9 @@ class GridMAP():
             da posicao do veiculo para corrigir sua pose.
         """
         # Adiciona linhas no fim da matriz:
-        new_lines = robot_pose['y'] + self.no_cells;
-        if(new_lines > len(self.grid)):
-            for i in range(new_lines - len(self.grid)):
+        new_lines_end = robot_pose['y'] + self.no_cells;
+        if(new_lines_end >= len(self.grid)):
+            for i in range(new_lines_end - len(self.grid) + 1):
                 self.grid.append([0.5] * len(self.grid[0]));
         
         # Adiciona linhas no inicio da matriz:
@@ -59,20 +59,25 @@ class GridMAP():
                 self.grid.insert(0, [0.5] * len(self.grid[0]));
                 
         # Adiciona colunas no fim da matriz:
-        new_columns = robot_pose['x'] + self.no_cells;
-        if(new_columns >= len(self.grid[0])):
+        new_columns_end = robot_pose['x'] + self.no_cells;
+        if(new_columns_end >= len(self.grid[0])):
             for row in self.grid:
-                row += [0.5] * (new_columns - len(row));
+                row += [0.5] * (new_columns_end - len(row));
                 
         # Adiciona colunas no inicio da matriz:
         new_columns = robot_pose['x'] - self.no_cells;
         if(new_columns < 0):
+            print('aopa');
             for row in self.grid:
                 row = ([0.5] * (new_columns * -1)) + row;
         
         new_columns *= -1;
         new_lines   *= -1;
-        return (new_columns, new_lines);
+        return (new_columns, new_lines, new_columns_end - len(self.grid[0]), new_lines_end - len(self.grid));
+        
+    def getSize(self):
+        """ Retorna a quantidade de linhas e de colunas do mapa. """
+        return (len(self.grid), len(self.grid[0]));
     
     def __str__(self):
         """ Retorna uma string com a probabilidade de cada celula. """

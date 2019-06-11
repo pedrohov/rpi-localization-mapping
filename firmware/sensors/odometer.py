@@ -72,7 +72,8 @@ if __name__ == "__main__":
     odometer = Odometer({
         "pin": 21,
         "count_per_revolution": 20,
-        "wheel_circumference": 42.73
+        "wheel_circumference": 42.73,
+        "encoder_circumference": 4.08
         });
         
 	

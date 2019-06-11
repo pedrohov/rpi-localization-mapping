@@ -13,6 +13,7 @@ class HCSR04():
         GPIO.setup(self.echo_pin, GPIO.IN);
         
         self.center_offset = config["center_offset"];
+        self.orient_offset = config["orientation"];
         self.orientation   = config["orientation"];
         self.max_range     = config["max_range"];
         self.min_range     = config["min_range"];
@@ -42,9 +43,14 @@ class HCSR04():
         time.sleep(0.1);
         return self.convertDurationToCM(pulse_duration);
         
-    def getInfo(self):
+    def getInfo(self, n_readings=10):
         info = {};
-        info["data"] = self.getData();
+        res = 0;
+        for i in range(0, n_readings):
+            res += self.getData();
+        res = res / n_readings;
+        
+        info["data"] = res;
         info["obstacle_found"] = True;
         if(info["data"] > self.max_range):
             info["obstacle_found"] = False;
@@ -55,20 +61,32 @@ class HCSR04():
         return info;
     
     def convertDurationToCM(self, duration):
-        ''' Converts the pulse duration into distance. '''
+        ''' Converte a duracao do pulso em distancia. '''
         # Check if the duration is valid.
         # Pulse durations bigger than 0.5s or less than 0s
         # shouldn't be considered.
         if(duration <= 0 or duration >= 500):
             return -1;
         return round(duration * 17150, 2);
+        
+    def updateOrientation(self, new_orientation):
+        ''' Atualiza a orientacao do sensor em relacao ao veiculo. '''
+        self.orientation = (new_orientation + self.orient_offset) % 360;
 
 if __name__ == "__main__":
     
-    sonar = HCSR04(4, 17);    
+    sonar = HCSR04({"type": "sonar",
+                    "pins": [4, 17],
+                    "center_offset": 7,
+                    "orientation": 90,
+                    "max_range": 300,
+                    "min_range": 10});
+    
     try:
         while(True):
             distance = sonar.getData();
             print("Distance: " + str(distance) + "cm");
+            info = sonar.getInfo();
+            print(info);
     except KeyboardInterrupt:
         GPIO.cleanup()

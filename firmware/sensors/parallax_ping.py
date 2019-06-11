@@ -11,6 +11,7 @@ class ParallaxPing():
         GPIO.setup(self.pin, GPIO.OUT);
         
         self.center_offset = config["center_offset"];
+        self.orient_offset = config["orientation"];
         self.orientation   = config["orientation"];
         self.max_range     = config["max_range"];
         self.min_range     = config["min_range"];
@@ -45,9 +46,14 @@ class ParallaxPing():
         time.sleep(0.1);
         return distance;
         
-    def getInfo(self):
+    def getInfo(self, n_readings=10):
         info = {};
-        info["data"] = self.getData();
+        res = 0;
+        for i in range(0, n_readings):
+            res += self.getData();
+        res = res / n_readings;
+        
+        info["data"] = res;
         info["obstacle_found"] = True;
         if(info["data"] > self.max_range):
             info["obstacle_found"] = False;
@@ -58,7 +64,7 @@ class ParallaxPing():
         return info;
     
     def convertDurationToCM(self, duration):
-        ''' Converts the pulse duration into distance. '''
+        ''' Converte a duracao do pulso em distancia. '''
         # Check if the duration is valid.
         # Pulse durations bigger than 0.5s or less than 0s
         # shouldn't be considered.
@@ -66,11 +72,19 @@ class ParallaxPing():
             return -1;
         # 17000 = 34000 / 2
         return round(duration * 17000, 2);
+        
+    def updateOrientation(self, new_orientation):
+        ''' Atualiza a orientacao do sensor em relacao ao veiculo. '''
+        self.orientation = (new_orientation + self.orient_offset) % 360;
 
 if __name__ == "__main__":
     
-    sonar = ParallaxPing(10);
-    
+    sonar = ParallaxPing({"type": "sonar",
+						"pins": [10],
+						"center_offset": 14,
+						"orientation": 0,
+						"max_range": 300,
+						"min_range": 10});
     try:
         while(True):
             distance = sonar.getData();

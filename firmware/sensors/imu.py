@@ -73,4 +73,5 @@ if __name__ == "__main__":
             continue;
         print("r: %f p: %f y: %f" % (math.degrees(fusionPose[0]), 
             math.degrees(fusionPose[1]), math.degrees(fusionPose[2])));
+        time.sleep(0.02)
         #print(mpu.getYaw());

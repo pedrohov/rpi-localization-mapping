@@ -16,9 +16,11 @@ class ClientSocket(Thread):
 
 		#self.send({ 'command': 'robot_socket' });
 		#self.send({ 'command': 'new_robot_data' });
+		# True se a thread nao for destruida:
+		self.isAlive   = True;
 
 	def run(self):
-		while(True):
+		while(self.isAlive):
 			message = self.socket.recv();
 
 			try:
@@ -47,8 +49,13 @@ class ClientSocket(Thread):
 		msg = self.message;
 		self.message = None;
 		return msg;
+	
+	def kill(self):
+		self.socket.close();
+		self.isAlive = False;
         
 if __name__ == '__main__':
-	receiver = ClientSocket('192.168.0.102', '8080');
+	receiver = ClientSocket('192.168.0.100', '8080');
 	receiver.start();
-	#receiver.send({ 'command': 'put', 'data': [1, 2, 3, 4] });
+	receiver.send({ 'command': 'put', 'data': [1, 2, 3, 4] });
+	receiver.kill();

@@ -37,7 +37,7 @@ class Robot():
         self.resolution = map_config['resolution'];
         
         # Configura os motores:
-        print('Motor setup.');
+        #print('Motor setup.');
         motors = config['motors'];
         self.motor_controller = Controller(motors['top_left'][0],
             motors['top_left'][1],
@@ -49,12 +49,12 @@ class Robot():
             motors['bottom_right'][1]);
         
         # Configura a Unidade de Medicao Inercial:
-        print('IMU setup.');
+        #print('IMU setup.');
         self.imu = MPU('IMUCONF');
         #print(self.imu.getData());
         
         # Configura os sensores de distancia:
-        print('Sensor setup.');
+        #print('Sensor setup.');
         self.sensors = {};
         for (key, sensor) in config['measurement'].items():
             if(sensor["type"] == "infrared"):
@@ -63,7 +63,7 @@ class Robot():
                 self.sensors[key] = Sonar.create(sensor);
         
         # Configura o odometro:
-        print('Odometer setup.');
+        #print('Odometer setup.');
         self.odometer = Odometer(config['odometry']);
             
         # Proximo controle a ser executado:
@@ -71,21 +71,26 @@ class Robot():
         
     def update(self, odometry):
         distance = odometry['distance'];
-        orientation = math.radians(self.orientation);
+        orientation = math.radians(self.pose['orientation']);
         
         # Calcula a nova posicao do robo na matriz:
         if(distance >= 0):
-            self.pose['x'] += math.floor(distance * math.cos(orientation) / self.resolution);
-            self.pose['y'] += math.floor(distance * math.sin(orientation) / self.resolution);
+            self.pose['x'] += int(distance * math.cos(orientation) / self.resolution);
+            self.pose['y'] += int(distance * math.sin(orientation) / self.resolution);
             
         # Atualiza a orientacao do robo:
-        self.orientation = odometry['orientation'];
+        self.pose['orientation'] = odometry['orientation'];
+        for key, sensor in self.sensors.items():
+            sensor.updateOrientation(odometry['orientation']);
         
         return self.pose;
         
     def correctPose(self, correction):
-        self.pose['x'] += correction[0];
-        self.pose['y'] += correction[1];
+        """ Ajusta a posicao do robo em relacao ao mapa atualizado. """
+        if(correction[0] > 0):
+            self.pose['x'] += correction[0];
+        if(correction[1] > 0):
+            self.pose['y'] += correction[1];
         return self.pose;
         
     def canMoveForward(self):
@@ -114,28 +119,38 @@ class Robot():
         # Tempo gasto para executar o comando:
         elapsed = time.time() - time_ini;
 		
-        return { "distance": distance, "time": elapsed, "orientation": self.orientation };
+        return { "distance": distance, "time": elapsed, "orientation": self.pose['orientation'] };
     
     def rotateLeft(self):
-        # Orientacao inicial:
-        orientation = self.calcOrientation();
-        target = orientation + 90;
-        print(orientation);
-        time_ini = time.time();
+        # Codigo com IMU:
+        #orientation = self.calcOrientation();
+        #target = orientation + 90;
+        #self.motor_controller.rotateLeft();
+        #while(orientation < target):
+            #orientation = self.imu.getYaw();
+            #print(orientation);
+        #self.motor_controller.stop();
         
-        self.motor_controller.rotateLeft();
-        while(orientation < target):
-            orientation = self.imu.getYaw();
-            print(orientation);
-        self.motor_controller.stop();
+        time_ini = time.time();
+        self.motor_controller.rotateLeft(0.4);
         
         # Tempo gasto para executar o comando:
         elapsed = time.time() - time_ini;
         
+        orientation = (self.pose['orientation'] + 90) % 360;
+        
         return { "distance": -1, "orientation": orientation, "time": elapsed };
     
     def rotateRight(self):
-        pass;
+        time_ini = time.time();
+        self.motor_controller.rotateRight(0.4);
+        
+        # Tempo gasto para executar o comando:
+        elapsed = time.time() - time_ini;
+        
+        orientation = (self.pose['orientation'] - 90) % 360;
+        
+        return { "distance": -1, "orientation": orientation, "time": elapsed };
     
     def sense(self):
         """ Le dados dos sensores.
@@ -159,9 +174,9 @@ class Robot():
         odometry = {};	
         if(control == FORWARD):
             odometry = self.forward();
-        elif(control == ROT_LEFT):
+        elif(control == ROTATE_LEFT):
             odometry = self.rotateLeft();
-        elif(control == ROT_RIGHT):
+        elif(control == ROTATE_RIGHT):
             odometry = self.rotateRight();
             
         return odometry;
@@ -195,7 +210,7 @@ if __name__ == "__main__":
         
         robot = Robot(config['robot'], config['map']);
         print(robot.sense());
-        print(robot.move(ROT_LEFT));
+        print(robot.move(ROTATE_LEFT));
         #print(robot.move(FORWARD));
         robot.cleanup();
     except json.JSONDecodeError:

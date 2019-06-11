@@ -15,7 +15,7 @@
 						"center_offset": 14,
 						"orientation": 0,
 						"max_range": 300,
-						"min_range": 7
+						"min_range": 10
 				},
 				"left": {
 						"type": "sonar",
@@ -23,7 +23,7 @@
 						"center_offset": 7,
 						"orientation": 90,
 						"max_range": 300,
-						"min_range": 7
+						"min_range": 10
 				},
 				"right": {
 						"type": "infrared",

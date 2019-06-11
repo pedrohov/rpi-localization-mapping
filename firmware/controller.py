@@ -69,8 +69,8 @@ if __name__ == "__main__":
         controller = Controller(11, 5, 22, 27, 26, 19, 6, 13);
         #controller.forward(1);
         #controller.reverse(3);
-        #controller.rotateLeft(3);
-        controller.rotateRight(2);
+        controller.rotateLeft(1.5);
+        #controller.rotateRight(1.5);
         #controller.top_right.reverse();
         time.sleep(2);
         GPIO.cleanup();
