@@ -10,7 +10,7 @@ function GridMAP(canvas, grid=null) {
     this.max_range  = null;
 
     // Robot:
-    this.robot_poses = [{x: 1, y: 3}];
+    this.robot_poses = [];
     this.isRoutingForRobot = false;
 
     // UI:
@@ -25,27 +25,7 @@ function GridMAP(canvas, grid=null) {
     this.moves = [[-1, 0],  // Move para cima,
                   [ 0,-1],  // Move para a esquerda,
                   [ 1, 0],  // Move para baixo,
-                  [ 0, 1]]; // Move para a direita. 
-    /*this.draw();
-    this.start = {x:0,y:0}
-    this.end = {x:4,y:this.grid[0].length - 1}
-    this.aStar();*/
-
-    /*this.initialize({
-        map_size: [ 40, 40 ],
-        robot_pose: { x: 20, y: 20, orientation: 0 },
-        map_data:
-            [ [ 24, 20, false, -90 ],
-              [ 13, 20, true, 90 ],
-              [ 20, 38, true, 0 ] ],
-        command: 'robot_socket',
-        resolution: 10,
-        max_range: 400,
-        map_resize: [0, 0, 0, 0]
-    });*/
-    //this.update([[24,20,false,-90],[13,20,true,90],[20,38,true,0]], {"x":20,"y":20,"orientation":0})
-    //this.resize([3, 1, 0, 0])
-    //this.draw()
+                  [ 0, 1]]; // Move para a direita.
 }
 
 
@@ -162,7 +142,7 @@ GridMAP.prototype.drawPathResult = function() {
      * A matriz inicial leva em consideracao
      * a posicao inicial do robo e o alcance dos sensores.
      */
-    this.robot_poses.push(data.robot_pose);
+    //this.robot_poses.push(data.robot_pose);
     this.resolution = data.resolution;
     this.max_range  = data.max_range;
     this.no_cells   = Math.ceil(this.max_range / this.resolution);
@@ -176,24 +156,25 @@ GridMAP.prototype.drawPathResult = function() {
     }
 
     // Atualiza o mapa:
-    this.update(data);
+    this.update(data, true);
     this.draw();
 }
 
-GridMAP.prototype.update = function(data) {
+GridMAP.prototype.update = function(data, init=false) {
     /* Atualiza a probabilidade das celulas da matriz com novos dados.
      * Adiciona a posicao atual do veiculo a array de posicoes.
      */
     if(!this.grid)
         return;
 
-    // Ajusta o tamanho da matriz:
-    this.resize(data.map_resize);
-    
     // Obtem a posicao atual do robo:
     let new_pose = data.robot_pose;
     this.robot_poses.push(new_pose);
 
+    // Ajusta o tamanho da matriz:
+    if(!init)
+        this.resize(data.map_resize);
+    
     this.grid[new_pose.y][new_pose.x] = (this.grid[new_pose.y][new_pose.x] + 0) / 2;
 
     // Atualiza o estado do mapa:
@@ -212,12 +193,12 @@ GridMAP.prototype.update = function(data) {
         
         // Atualiza a probabilidade das demais celulas:
         let orientation = data[3] * Math.PI / 180;
-        x -= Math.floor(Math.cos(orientation));
-        y += Math.floor(Math.sin(orientation));
+        x += Math.round(Math.cos(orientation)) * -1;
+        y += Math.round(Math.sin(orientation));
         while((x != new_pose.x) || (y != new_pose.y)) {
             this.grid[y][x] = (0 + this.grid[y][x]) / 2;
-            x -= Math.floor(Math.cos(orientation));
-            y += Math.floor(Math.sin(orientation));
+            x += Math.round(Math.cos(orientation)) *  -1;
+            y += Math.round(Math.sin(orientation));
         }
     });
 
@@ -512,6 +493,7 @@ GridMAP.prototype.goTo = function(cell) {
  *  AJUSTE DO TAMANHO DA MATRIZ
  */
 GridMAP.prototype.resize = function(size_adjustment) {
+    console.log(size_adjustment)
 
     // Adiciona linhas no inicio da matriz:
     let new_lines = size_adjustment[1];
@@ -546,63 +528,18 @@ GridMAP.prototype.resize = function(size_adjustment) {
             row[row.length] = 0.5;
     });
 
-    /*if(this.robot_poses.length === 0)
-        return;
-
-    let robot_pose = this.robot_poses[this.robot_poses.length - 1];
-
-    // Adiciona linhas no fim da matriz:
-    new_lines = robot_pose.y + this.no_cells;
-    if(new_lines > this.grid.length) {
-        for(let i = 0; i <= new_lines - this.grid.length; i++) {
-            new_row = [];
-            for(let j = 0; j < this.grid[i].length; j++)
-                new_row[j] = 0.5;
-            this.grid.push(new_row);
-        }
-    }
-    
-    // Adiciona linhas no inicio da matriz:
-    new_lines = robot_pose.y - this.no_cells;
-    if(new_lines < 0) {
-        for(let i = 0; i < (new_lines * -1); i++) {
-            new_row = [];
-            for(let j = 0; j < this.grid[0].length; j++)
-                new_row[j] = 0.5;
-            this.grid.unshift(new_row);
-        }
-    }
-            
-    // Adiciona colunas no fim da matriz:
-    new_columns = robot_pose.x + this.no_cells;
-    if(new_columns >= this.grid[0].length) {
-        this.grid.forEach((row, index) => {
-            for(let i = row.length; i <= new_columns; i++) {
-                row[i] = 0.5;
-            }
-        });
-    }
-            
-    // Adiciona colunas no inicio da matriz:
-    new_columns = robot_pose.x - this.no_cells;
-    if(new_columns < 0) {
-        this.grid.forEach((row, index) => {
-            for(let i = 0; i < (new_columns * -1); i++) {
-                row.unshift(0.5);
-            }
-        });
-    }
-
-    new_columns *= -1;
-    new_lines   *= -1;*/
     this.correctRobotPoses({ new_columns: size_adjustment[0], new_lines: size_adjustment[1] });
 }
 
 GridMAP.prototype.correctRobotPoses = function(offset) {
+    console.log('offset: ' + offset)
     this.robot_poses.forEach((pose, index) => {
-        pose.x += offset.new_columns;
-        pose.y += offset.new_lines;
+        if(offset.new_columns > 0)
+            pose.x += offset.new_columns;
+        if(offset.new_lines > 0)
+            pose.y += offset.new_lines;
     });
+    console.log(this.robot_poses)
 }
 
 GridMAP.prototype.getCurrentPose = function() {

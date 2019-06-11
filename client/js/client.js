@@ -44,7 +44,7 @@ window.onload = function() {
         [0, 0, 0, 0, 1, 0]]**/
 
     // Instancia o mapa:
-    map = new GridMAP(canvas, grid);
+    map = new GridMAP(canvas);
 
     // Define mouse events:
     window.addEventListener('wheel', function(event) {
@@ -108,9 +108,9 @@ window.onload = function() {
 
 function toggleConnect() {
     if(!isConnected) {
-        //openWebsocket();
-        changeUIconnected();
-        isConnected = true;
+        openWebsocket();
+        /*changeUIconnected();
+        isConnected = true;*/
     } else {
         socket.close();
         /*changeUIdisconnected();

@@ -30,12 +30,12 @@ class GridMAP():
             
             # Atualiza a probabilidade das demais celulas:
             orientation = math.radians(data[3]);
-            x += math.floor(math.cos(orientation)) * -1;
-            y += math.floor(math.sin(orientation));
+            x += int(math.cos(orientation)) * -1;
+            y += int(math.sin(orientation));
             while((x != robot_pose['x']) or (y != robot_pose['y'])):
                 self.grid[y][x] = (0 + self.grid[y][x]) / 2;
-                x += math.floor(math.cos(orientation)) * -1;
-                y += math.floor(math.sin(orientation));
+                x += int(math.cos(orientation)) * -1;
+                y += int(math.sin(orientation));
                 
         
     def resize(self, robot_pose):
@@ -46,6 +46,8 @@ class GridMAP():
             Retorna a quantidade de linhas e colunas adicionadas antes
             da posicao do veiculo para corrigir sua pose.
         """
+        cols = len(self.grid[0]);
+        
         # Adiciona linhas no fim da matriz:
         new_lines_end = robot_pose['y'] + self.no_cells;
         if(new_lines_end >= len(self.grid)):
@@ -72,7 +74,7 @@ class GridMAP():
         
         new_columns *= -1;
         new_lines   *= -1;
-        return (new_columns, new_lines, new_columns_end - len(self.grid[0]), new_lines_end - len(self.grid));
+        return (new_columns, new_lines, new_columns_end - cols, new_lines_end - cols);
         
     def getSize(self):
         """ Retorna a quantidade de linhas e de colunas do mapa. """

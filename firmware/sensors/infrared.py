@@ -29,7 +29,7 @@ class Infrared():
         info["offset"] = self.center_offset;
         info['data'] = 0;
         if(info['obstacle_found'] is False):
-            info['data'] = 25;
+            info['data'] = self.range;
         
         return info;
         
