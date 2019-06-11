@@ -22,9 +22,7 @@ class Slam():
         self.map.resize(self.robot.pose);
         
         # Faz a primeira leitura e constroi o mapa inicial:
-        data = self.dataAssociation(sensor_data, self.robot.pose);
-        #print(data);
-        
+        data = self.dataAssociation(sensor_data, self.robot.pose);        
         self.map.update(data, self.robot.pose);
         self.time = 0;
         
@@ -45,7 +43,6 @@ class Slam():
                 'map_resize': [0, 0, 0, 0]
             });            
             print('Connected.');
-            #exit();
         except:
             print('Connection refused.');
             exit();
@@ -86,11 +83,8 @@ class Slam():
             # Encontra a celula alvo do mapa:
             x, y = robot_pose['x'], robot_pose['y'];
             orientation = info['orientation'];
-            
-            if  (orientation == 0  ): x += offset;
-            elif(orientation == 90 ): y -= offset;
-            elif(orientation == 180): x -= offset;
-            else: y += offset;
+            x += math.floor(offset * math.cos(math.radians(orientation)));
+            y += math.floor(offset * math.sin(math.radians(orientation)) * -1);
             
             # Cria tupla com os dados necessarios para mapeamento:
             # Posicao da matriz, se existe um obstaculo, direcao do marco.
@@ -152,7 +146,7 @@ class Slam():
         
     def cleanup(self):
         self.robot.cleanup();
-        #self.socket.kill();
+        self.socket.kill();
 
 if __name__ == "__main__":
     try:

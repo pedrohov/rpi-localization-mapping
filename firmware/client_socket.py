@@ -14,8 +14,6 @@ class ClientSocket(Thread):
 		self.socket  = create_connection('ws://' + self.ip + ':' + self.port);
 		self.message = None;
 
-		#self.send({ 'command': 'robot_socket' });
-		#self.send({ 'command': 'new_robot_data' });
 		# True se a thread nao for destruida:
 		self.isAlive   = True;
 

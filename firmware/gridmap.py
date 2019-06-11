@@ -67,7 +67,6 @@ class GridMAP():
         # Adiciona colunas no inicio da matriz:
         new_columns = robot_pose['x'] - self.no_cells;
         if(new_columns < 0):
-            print('aopa');
             for row in self.grid:
                 row = ([0.5] * (new_columns * -1)) + row;
         
