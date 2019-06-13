@@ -84,8 +84,8 @@ class Slam():
             # Encontra a celula alvo do mapa:
             x, y = robot_pose['x'], robot_pose['y'];
             orientation = info['orientation'];
-            x += int(offset * int(math.cos(math.radians(orientation))));
-            y += int(offset * int(math.sin(math.radians(orientation)) * -1));
+            x += int(offset * math.cos(math.radians(orientation)));
+            y += int(offset * math.sin(math.radians(orientation)) * -1);
             
             # Cria tupla com os dados necessarios para mapeamento:
             # Posicao da matriz, se existe um obstaculo, direcao do marco.
@@ -122,6 +122,7 @@ class Slam():
             
             # Associa as leituras as respectivas celulas no mapa:
             sensor_data = self.dataAssociation(sensor_info, robot_pose[0]);
+            print(sensor_data);
             
             # Atualiza o mapa:
             self.mapping(sensor_data);

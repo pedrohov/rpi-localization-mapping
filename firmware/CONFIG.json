@@ -30,7 +30,7 @@
 						"pins": [9],
 						"center_offset": 7,
 						"orientation": -90,
-						"range": 25
+						"range": 30
 				}
 		},
 		"odometry": {

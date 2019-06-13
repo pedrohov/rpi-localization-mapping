@@ -195,10 +195,20 @@ GridMAP.prototype.update = function(data, init=false) {
         let orientation = data[3] * Math.PI / 180;
         x += Math.round(Math.cos(orientation)) * -1;
         y += Math.round(Math.sin(orientation));
+
         while((x != new_pose.x) || (y != new_pose.y)) {
+            // ISSUE: Diferenca entre o arredondamento do JS e do Python
+            if((data[3] == 90) && (y >= new_pose.y))
+                break;
+            else if((data[3] == 270) && (y <= new_pose.y))
+                break;
+            else if((data[3] == 0) && (x <= new_pose.x))
+                break;
+            else if((data[3] == 180) && (x >= new_pose.x))
+                break;
+                
             this.grid[y][x] = (0 + this.grid[y][x]) / 2;
-            x += Math.round(Math.cos(orientation)) *  -1;
-            y += Math.round(Math.sin(orientation));
+            x += Math.round(Math.cos(orientation)) * -1;
         }
     });
 
@@ -246,7 +256,6 @@ GridMAP.prototype.search = function(method) {
 
     // Matriz que informa a distancia entre determinada celula e a celula-alvo:
     let heuristic = this.createDistanceMatrix(this.end);
-    console.log(heuristic)
 
     // Marca a posicao inicial como visitada:
     closed[this.start.x][this.start.y] = 1;
@@ -493,8 +502,6 @@ GridMAP.prototype.goTo = function(cell) {
  *  AJUSTE DO TAMANHO DA MATRIZ
  */
 GridMAP.prototype.resize = function(size_adjustment) {
-    console.log(size_adjustment)
-
     // Adiciona linhas no inicio da matriz:
     let new_lines = size_adjustment[1];
     for(let i = 0; i < new_lines; i++) {
@@ -513,7 +520,6 @@ GridMAP.prototype.resize = function(size_adjustment) {
 
     // Adiciona linhas no fim da matriz:
     new_lines = size_adjustment[3];
-    console.log('new lines: ', new_lines)
     for(let i = 0; i < new_lines; i++) {
         new_row = [];
         for(let j = 0; j < this.grid[i].length; j++)
@@ -532,14 +538,12 @@ GridMAP.prototype.resize = function(size_adjustment) {
 }
 
 GridMAP.prototype.correctRobotPoses = function(offset) {
-    console.log('offset: ' + offset)
     this.robot_poses.forEach((pose, index) => {
         if(offset.new_columns > 0)
             pose.x += offset.new_columns;
         if(offset.new_lines > 0)
             pose.y += offset.new_lines;
     });
-    console.log(this.robot_poses)
 }
 
 GridMAP.prototype.getCurrentPose = function() {

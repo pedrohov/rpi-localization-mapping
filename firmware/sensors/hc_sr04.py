@@ -43,7 +43,7 @@ class HCSR04():
         time.sleep(0.1);
         return self.convertDurationToCM(pulse_duration);
         
-    def getInfo(self, n_readings=10):
+    def getInfo(self, n_readings=1):
         info = {};
         res = 0;
         for i in range(0, n_readings):

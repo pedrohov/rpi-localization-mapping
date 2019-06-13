@@ -76,12 +76,13 @@ class Robot():
         # Calcula a nova posicao do robo na matriz:
         if(distance >= 0):
             self.pose['x'] += int(distance * math.cos(orientation) / self.resolution);
-            self.pose['y'] += int(distance * math.sin(orientation) / self.resolution);
+            self.pose['y'] += int(distance * math.sin(orientation) * -1 / self.resolution);
             
         # Atualiza a orientacao do robo:
         self.pose['orientation'] = odometry['orientation'];
         for key, sensor in self.sensors.items():
             sensor.updateOrientation(odometry['orientation']);
+            print(key, sensor.orientation);
         
         return self.pose;
         
@@ -115,6 +116,7 @@ class Robot():
             distance = self.odometer.getOdometry()["distance"];
 		
         odometry_data = self.odometer.stop();
+        self.motor_controller.stop();
 		
         # Tempo gasto para executar o comando:
         elapsed = time.time() - time_ini;

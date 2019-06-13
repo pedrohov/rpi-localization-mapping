@@ -35,8 +35,7 @@ class GridMAP():
             while((x != robot_pose['x']) or (y != robot_pose['y'])):
                 self.grid[y][x] = (0 + self.grid[y][x]) / 2;
                 x += int(math.cos(orientation)) * -1;
-                y += int(math.sin(orientation));
-                
+                y += int(math.sin(orientation));                
         
     def resize(self, robot_pose):
         """ Atualiza o tamanho do mapa de acordo com a posicao do veiculo.

@@ -4,10 +4,11 @@ let port    = '8080';
 let socket  = null;
 
 // Editor state:
-let isConnected = false;
-let isEditing   = false;
-let isPathing   = false;
-let isGoto      = false;
+let isSimulating = false;
+let isConnected  = false;
+let isEditing    = false;
+let isPathing    = false;
+let isGoto       = false;
 
 let editAction = 'obstacle';
 
@@ -27,15 +28,6 @@ window.onload = function() {
     canvas.width  = window.innerWidth - $('.navbar').innerWidth();
     canvas.height = window.innerHeight;
 
-    let size = 10;
-    let prob = 0.2;
-
-    let grid = new Array(size);
-    for(let i=0; i < size; i++) {
-        grid[i] = new Array(size)
-        for(let j=0; j< size; j++)
-            grid[i][j] = prob;
-    }
 
     /*grid = [[0, 0, 1, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],
@@ -109,12 +101,34 @@ window.onload = function() {
 function toggleConnect() {
     if(!isConnected) {
         openWebsocket();
-        /*changeUIconnected();
-        isConnected = true;*/
     } else {
         socket.close();
-        /*changeUIdisconnected();
-        isConnected = true;*/
+    }
+}
+
+function toggleSimulate() {
+    disableAll('simulate')
+
+    if(isSimulating) {
+        isSimulating = false;
+        $('#simulationOptions').addClass('hidden');
+    } else {
+        isSimulating = true;
+        if(!map.grid) {
+            let size = 100;
+            let prob = 0.2;
+
+            let grid = new Array(size);
+            for(let i=0; i < size; i++) {
+                grid[i] = new Array(size)
+                for(let j=0; j< size; j++)
+                    grid[i][j] = prob;
+            }
+            map.grid = grid;
+            map.draw();
+        }
+
+        $('#simulationOptions').removeClass('hidden');
     }
 }
 
@@ -159,6 +173,11 @@ function toggleGoto() {
 }
 
 function disableAll(mode) {
+    if(mode === 'simulate') {
+        isGoto = false;
+        $('#options').addClass('hidden');
+    }
+
     if(isEditing && mode !== 'edit')
         toggleEdit();
     else if(isPathing && mode !== 'path')
@@ -229,6 +248,11 @@ function changeUIconnected() {
     $('#port').prop('disabled', true);
 
     $('#options').removeClass('hidden');
+
+    isSimulating = false;
+    $('#simulationOptions').addClass('hidden');
+    $('#editOptions').addClass('hidden');
+    $('#searchOptions').addClass('hidden');
 
     showMap();
 }
